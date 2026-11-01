@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Simulator.Core</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Native flight-dynamics core (libsimcore.so / simcore.dll / libsimcore.dylib). -->
+  <ItemGroup>
+    <SimcoreNative Include="$(SimcoreNativeDir)libsimcore.so" Condition="Exists('$(SimcoreNativeDir)libsimcore.so')" />
+    <SimcoreNative Include="$(SimcoreNativeDir)simcore.dll" Condition="Exists('$(SimcoreNativeDir)simcore.dll')" />
+    <SimcoreNative Include="$(SimcoreNativeDir)libsimcore.dylib" Condition="Exists('$(SimcoreNativeDir)libsimcore.dylib')" />
+    <None Include="@(SimcoreNative)" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+  <Target Name="WarnMissingSimcore" BeforeTargets="Build"
+          Condition="!Exists('$(SimcoreNativeDir)libsimcore.so') And !Exists('$(SimcoreNativeDir)simcore.dll') And !Exists('$(SimcoreNativeDir)libsimcore.dylib')">
+    <Message Importance="high" Text="simcore native library not found in $(SimcoreNativeDir). Build it first: cmake -S native -B build/native &amp;&amp; cmake --build build/native --config Release" />
+  </Target>
+
+</Project>

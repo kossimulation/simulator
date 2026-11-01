@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Configure native core
+        run: cmake -S native -B build/native -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build native core
+        run: cmake --build build/native --config Release --parallel
+
+      - name: Native tests
+        run: ctest --test-dir build/native -C Release --output-on-failure
+
+      - name: Build .NET
+        run: dotnet build managed/Simulator.sln -c Release
+
+      - name: .NET tests
+        run: dotnet test managed/Simulator.sln -c Release --no-build
+
+      - name: CLI smoke run
+        run: >
+          dotnet run --project managed/src/Simulator.Cli -c Release --no-build --
+          --vehicle helicopter --speed 0 --altitude 100 --duration 5 --out heli.csv
