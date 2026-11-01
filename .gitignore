@@ -1,0 +1,22 @@
+build/
+bin/
+obj/
+*.user
+.vs/
+.vscode/
+.idea/
+TestResults/
+
+# Simulation output
+*.csv
+
+# MATLAB / Simulink
+*.asv
+*.autosave
+*.slxc
+*.mex*
+slprj/
+*_ert_rtw/
+*_grt_rtw/
+codegen/
+!matlab/codegen/
