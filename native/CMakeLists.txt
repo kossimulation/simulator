@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(simcore VERSION 0.1.0 LANGUAGES CXX)
+project(simcore VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -71,4 +71,8 @@ if(SIMCORE_BUILD_TESTS)
   target_link_libraries(simcore_tests PRIVATE simcore_static)
   target_compile_options(simcore_tests PRIVATE ${SIMCORE_WARNINGS})
   add_test(NAME simcore_tests COMMAND simcore_tests)
+
+  # Stand-in for kos_simulation model DLLs, used by the managed KosModel tests.
+  add_library(kos_fake_model SHARED tests/kos_fake_model.c)
+  set_target_properties(kos_fake_model PROPERTIES C_VISIBILITY_PRESET hidden)
 endif()

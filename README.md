@@ -23,7 +23,10 @@
 - Спрощений контакт із землею.
 - C# обгортка `Simulation` і консольний застосунок, що пише телеметрію в CSV.
 - MATLAB: параметри моделей і скрипти генерації C++ з Simulink.
-- Тести: 13 нативних і 8 на C#. CI на Linux і Windows.
+- **Готові моделі динаміки** у вигляді DLL з таргета `kos_simulation`
+  (AK13Dynamics, DynamicsGorEl): завантажувач `KosModel` (C#) і команда
+  `simulator-cli kos`, див. [docs/kos_models.md](docs/kos_models.md).
+- Тести: 13 нативних і 13 на C#. CI на Linux і Windows.
 
 ## Вимоги
 
@@ -67,6 +70,13 @@ dotnet run --project managed/src/Simulator.Cli -c Release -- \
     --vehicle fixed-wing --speed 50 --altitude 1000 --duration 30 --pitch-step 0.1 --out fw.csv
 ```
 
+Готова модель-DLL (32-бітна, тому CLI публікується під x86):
+
+```powershell
+dotnet publish managed/src/Simulator.Cli -c Release -r win-x86 --self-contained -o out/cli-x86
+out/cli-x86/simulator-cli kos --dll AK13Dynamics.dll --list
+```
+
 ## MATLAB / Simulink
 
 ```matlab
@@ -87,7 +97,7 @@ native/
   tests/                      нативні тести
   generated/                  код з Embedded Coder
 managed/
-  src/Simulator.Core/         P/Invoke + клас Simulation
+  src/Simulator.Core/         P/Invoke + клас Simulation, Kos/KosModel (DLL моделей)
   src/Simulator.Cli/          консольний раннер, CSV
   tests/Simulator.Core.Tests/ xUnit
 matlab/
@@ -95,6 +105,7 @@ matlab/
   codegen/                    configure_codegen.m, generate_code.m
   models/                     .slx моделі
 docs/architecture.md
+docs/kos_models.md            ABI і запуск AK13Dynamics / DynamicsGorEl
 ```
 
 ## Можливі наступні кроки

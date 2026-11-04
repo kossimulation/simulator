@@ -14,6 +14,13 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Fake kos_simulation model DLL built by native/CMakeLists.txt (tests/kos_fake_model.c). -->
+  <ItemGroup>
+    <None Include="$(SimcoreNativeDir)libkos_fake_model.so" Condition="Exists('$(SimcoreNativeDir)libkos_fake_model.so')" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(SimcoreNativeDir)kos_fake_model.dll" Condition="Exists('$(SimcoreNativeDir)kos_fake_model.dll')" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(SimcoreNativeDir)libkos_fake_model.dylib" Condition="Exists('$(SimcoreNativeDir)libkos_fake_model.dylib')" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Simulator.Core\Simulator.Core.csproj" />
   </ItemGroup>

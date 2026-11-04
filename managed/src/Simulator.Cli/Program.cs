@@ -23,6 +23,8 @@ internal static class Program
 
     private static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "kos") return KosCommand.Run(args[1..]);
+
         Options options;
         try
         {
