@@ -82,7 +82,7 @@ public sealed unsafe class KosModel : IDisposable
         {
             var d = describe(_model, i);
             if (d.Name == IntPtr.Zero || d.Address == IntPtr.Zero) continue;
-            var name = Marshal.PtrToStringAnsi(d.Name)!;
+            var name = DecodeName(d.Name);
             var port = new KosPort(i, name,
                 d.IsFromBus != 0 ? KosPortDirection.Input : KosPortDirection.Output,
                 d.Width, d.IsParameter != 0, d.Type);
@@ -95,6 +95,26 @@ public sealed unsafe class KosModel : IDisposable
     }
 
     public string Path { get; }
+
+    static KosModel() => System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+    // Port names are plain ASCII, except Cyrillic ones that patch_ports.py stores in CP1251
+    // (e.g. the engine input "неповрежден"). Decode independently of the OS ANSI code page.
+    internal static string DecodeName(IntPtr p)
+    {
+        var len = 0;
+        while (((byte*)p)[len] != 0) len++;
+        var bytes = new ReadOnlySpan<byte>((void*)p, len);
+        if (!bytes.ContainsAnyInRange((byte)0x80, (byte)0xFF)) return System.Text.Encoding.ASCII.GetString(bytes);
+        try
+        {
+            return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes);
+        }
+        catch (System.Text.DecoderFallbackException)
+        {
+            return System.Text.Encoding.GetEncoding(1251).GetString(bytes);
+        }
+    }
     public IReadOnlyList<KosPort> Ports { get; }
     public IReadOnlyList<KosPort> Inputs { get; }
     public IReadOnlyList<KosPort> Outputs { get; }

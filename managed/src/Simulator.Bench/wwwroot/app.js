@@ -1,5 +1,6 @@
 // Bench front-end: WebSocket telemetry -> 3D scene, PFD, map, charts; controls -> server.
 import * as THREE from './vendor/three.module.min.js';
+import { InputMapper, mountInputPanel } from './input.js';
 
 const $ = (id) => document.getElementById(id);
 const DEG = Math.PI / 180;
@@ -181,24 +182,20 @@ function updateKeyboard(dt) {
   }
 }
 
-// Gamepad: left stick roll/pitch, right stick X yaw, right stick Y (or triggers) throttle.
-let gamepadActive = false;
-function updateGamepad() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  const gp = [...pads].find((p) => p && p.connected);
-  $('gamepad').textContent = gp ? `Підключено: ${gp.id.slice(0, 40)}` : '';
-  if (!gp) { gamepadActive = false; return; }
-  const dz = (v) => (Math.abs(v) < 0.06 ? 0 : v);
-  const [lx, ly, rx, ry] = [gp.axes[0] ?? 0, gp.axes[1] ?? 0, gp.axes[2] ?? 0, gp.axes[3] ?? 0];
-  const moved = [lx, ly, rx, ry].some((v) => Math.abs(v) > 0.06);
-  if (!moved && !gamepadActive) return;  // do not fight the sliders until the stick is touched
-  gamepadActive = true;
-  state.controls.roll = dz(lx);
-  state.controls.pitch = -dz(ly);  // stick back (positive Y) = nose up
-  state.controls.yaw = dz(rx);
-  if (Math.abs(ry) > 0.06) state.controls.throttle = Math.min(1, Math.max(0, state.controls.throttle - ry * 0.01));
-  syncSliders();
-  sendControls();
+// Joystick / RC transmitter (TX12 etc.): mapping, calibration and switches live in input.js.
+const input = new InputMapper((cmd) => {
+  if (cmd === 'pause') $('btn-pause').click();
+  else if (cmd === 'reset') send({ type: 'reset' });
+  else if (cmd.startsWith('action:')) send({ type: 'action', id: cmd.slice(7) });
+});
+const inputPanel = mountInputPanel($('input-panel'), input, () => state.info?.actions ?? []);
+
+function updateInput(dt) {
+  if (input.poll(state.controls, dt)) {
+    syncSliders();
+    sendControls();
+  }
+  inputPanel.update(state.controls);
 }
 
 setInterval(sendControls, 200);  // heartbeat keeps the server in sync after reconnects
@@ -632,7 +629,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
   updateKeyboard(dt);
-  updateGamepad();
+  updateInput(dt);
   updateScene(dt);
   renderer.render(scene, camera);
   drawPfd();

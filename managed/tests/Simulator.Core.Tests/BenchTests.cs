@@ -89,3 +89,56 @@ public class BenchTests
         Assert.True(runner.Snapshot().Frame.OnGround);
     }
 }
+
+public class BenchEngineTests
+{
+    private static string Fake() => Path.Combine(AppContext.BaseDirectory,
+        OperatingSystem.IsWindows() ? "kos_fake_model.dll"
+        : OperatingSystem.IsMacOS() ? "libkos_fake_model.dylib" : "libkos_fake_model.so");
+
+    // The fake DLL plays both roles: the "engine" turns lever into velocity (= thrust source),
+    // which a link feeds into the dynamics' thrust input.
+    private const string Profile = """
+        {
+          "name": "fake+engine", "kind": "fixed-wing",
+          "inputs": { "mass": 2, "engine:mass": 1 },
+          "roll": { "port": "sum_gains" }, "pitch": { "port": "sum_gains" }, "yaw": { "port": "sum_gains" },
+          "position": { "mode": "absolute", "north": "position", "east": "sum_gains", "up": "sum_gains" },
+          "controls": { "throttle": { "port": "engine:thrust", "min": 0, "max": 10, "initial": 0.1 } },
+          "engine": { "dll": "unused", "links": [ { "from": "engine:velocity", "to": "thrust", "scale": 2 } ] }
+        }
+        """;
+
+    [Fact]
+    public void EngineIsCoSimulatedThroughLinks()
+    {
+        var p = System.Text.Json.JsonSerializer.Deserialize<KosProfile>(Profile, KosProfile.JsonOptions)!;
+        using var m = new KosBenchModel(Fake(), p, Fake());
+        var c = m.Reset();               // engine thrust = 1 N on 1 kg -> engine velocity = t
+        for (var i = 0; i < 100; i++) m.Step(c);
+        var f = m.Read();
+        Assert.Equal(1.0, f.Channels["engine:velocity"], 9);
+        // Dynamics thrust = 2 * engine velocity, integrated on 2 kg: v = sum(2 * 0.01k) / 2 * 0.01
+        Assert.Equal(0.505, f.Channels["velocity"], 9);
+    }
+
+    [Fact]
+    public void EnginePortWithoutEngineIsRejected()
+    {
+        var p = System.Text.Json.JsonSerializer.Deserialize<KosProfile>(Profile, KosProfile.JsonOptions)! with { Engine = null };
+        var e = Assert.Throws<InvalidDataException>(() => new KosBenchModel(Fake(), p));
+        Assert.Contains("engine:thrust", e.Message);
+    }
+
+    [Fact]
+    public unsafe void DecodesCp1251PortNames()
+    {
+        // "неповрежден" as written by patch_ports.py (CP1251), plus ASCII and UTF-8.
+        byte[] cp1251 = [0xED, 0xE5, 0xEF, 0xEE, 0xE2, 0xF0, 0xE5, 0xE6, 0xE4, 0xE5, 0xED, 0];
+        fixed (byte* p = cp1251) Assert.Equal("неповрежден", Simulator.Core.Kos.KosModel.DecodeName((IntPtr)p));
+        byte[] ascii = "P1\0"u8.ToArray();
+        fixed (byte* p = ascii) Assert.Equal("P1", Simulator.Core.Kos.KosModel.DecodeName((IntPtr)p));
+        byte[] utf8 = [.. System.Text.Encoding.UTF8.GetBytes("кут"), 0];
+        fixed (byte* p = utf8) Assert.Equal("кут", Simulator.Core.Kos.KosModel.DecodeName((IntPtr)p));
+    }
+}

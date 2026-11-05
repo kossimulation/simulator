@@ -55,7 +55,8 @@ main {
   grid-template-areas:
     "view inst"
     "charts charts"
-    "panel panel";
+    "panel panel"
+    "input input";
   gap: 10px;
   padding: 10px;
 }
@@ -158,7 +159,7 @@ kbd {
 @media (max-width: 1000px) {
   main {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "view" "inst" "charts" "panel";
+    grid-template-areas: "view" "inst" "charts" "panel" "input";
   }
   .view3d { min-height: 380px; }
   .instruments { flex-direction: row; flex-wrap: wrap; }
@@ -170,4 +171,33 @@ kbd {
 @media (max-width: 560px) {
   main { padding: 6px; }
   .sticks { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------- RC / joystick panel */
+.input { grid-area: input; }
+.input summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+.input-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.input-head select { max-width: 340px; }
+.muted { color: var(--muted); }
+.axis-monitor {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 6px 14px;
+  margin: 8px 0 12px;
+}
+.mon { display: grid; grid-template-columns: 1.5em 1fr 3.2em; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.mon span { color: var(--muted); }
+.mon b { text-align: right; font-weight: 500; }
+.bar { position: relative; height: 10px; border-radius: 5px; background: var(--panel-2); border: 1px solid var(--line); }
+.bar::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.bar i { position: absolute; top: -2px; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--accent); }
+.map-table { width: 100%; border-collapse: collapse; }
+.map-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.map-table td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.map-table output { font-variant-numeric: tabular-nums; }
+.binds-head { display: flex; align-items: center; gap: 12px; margin: 12px 0 6px; }
+.binds { display: flex; flex-direction: column; gap: 6px; }
+.bind { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .map-table { display: block; overflow-x: auto; }
 }

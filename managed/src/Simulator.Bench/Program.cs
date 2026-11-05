@@ -152,6 +152,7 @@ internal sealed record BenchOptions(
     double Altitude = 100,
     string? Profile = null,
     string? Dll = null,
+    string? EngineDll = null,
     string Host = "localhost",
     int Port = 5080,
     bool Help = false)
@@ -173,6 +174,7 @@ internal sealed record BenchOptions(
                 "--altitude" => o with { Altitude = Num(key, value) },
                 "--profile" => o with { Profile = value, Model = "kos" },
                 "--dll" => o with { Dll = value },
+                "--engine-dll" => o with { EngineDll = value },
                 "--host" => o with { Host = value },
                 "--port" => o with { Port = (int)Num(key, value) },
                 _ => throw new ArgumentException($"Unknown option {key}."),
@@ -195,14 +197,28 @@ internal sealed record BenchOptions(
                 var profilePath = Profile ?? throw new ArgumentException("--profile is required for kos models.");
                 if (!File.Exists(profilePath)) profilePath = Path.Combine(AppContext.BaseDirectory, profilePath);
                 var profile = KosProfile.Load(profilePath);
-                var dll = Dll ?? profile.Dll ?? throw new ArgumentException("--dll is required (profile has no \"dll\").");
-                if (!Path.IsPathRooted(dll) && !File.Exists(dll))
-                    dll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(profilePath))!, dll);
-                return new KosBenchModel(dll, profile);
+                var profileDir = Path.GetDirectoryName(Path.GetFullPath(profilePath))!;
+                var dll = Locate(Dll ?? profile.Dll ?? throw new ArgumentException("--dll is required (profile has no \"dll\")."),
+                                 profileDir);
+                string? engine = null;
+                if (profile.Engine is not null)
+                {
+                    // Engine DLL: --engine-dll, else next to the dynamics DLL, else next to the profile.
+                    engine = EngineDll ?? profile.Engine.Dll;
+                    if (EngineDll is null && !Path.IsPathRooted(engine))
+                    {
+                        var besideModel = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(dll))!, engine);
+                        engine = File.Exists(besideModel) ? besideModel : Locate(engine, profileDir);
+                    }
+                }
+                return new KosBenchModel(dll, profile, engine);
             default:
                 throw new ArgumentException($"Unknown model '{Model}'. Use helicopter, fixed-wing or --profile.");
         }
     }
+
+    private static string Locate(string path, string profileDir) =>
+        Path.IsPathRooted(path) || File.Exists(path) ? path : Path.Combine(profileDir, path);
 
     private static double Num(string key, string value) =>
         double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v)
@@ -217,6 +233,7 @@ internal sealed record BenchOptions(
           --altitude <m>                  trim altitude (default 100)
           --profile <file.json>           kos_simulation model DLL bound by a profile (profiles/*.json)
           --dll <model.dll>               DLL path (overrides "dll" in the profile)
+          --engine-dll <engine.dll>       engine DLL for profiles with "engine" (default: next to the model DLL)
           --host <addr>                   listen address (default localhost; 0.0.0.0 for LAN)
           --port <n>                      HTTP port (default 5080)
           x86 model DLLs need a 32-bit bench: dotnet publish managed/src/Simulator.Bench -c Release -r win-x86 --self-contained

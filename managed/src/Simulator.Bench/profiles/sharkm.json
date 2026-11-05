@@ -1,0 +1,70 @@
+{
+  // Shark-M UAV, DynamicsSharkM.dll (kos_simulation; same 95 ports as DynamicsGorEl).
+  // Values from Dynamics_SH/README_ua.md: 14.5 kg, cruise 75 km/h at ~9-10 N, max ~15 N.
+  "name": "Shark-M",
+  "kind": "fixed-wing",
+  "dll": "DynamicsSharkM.dll",
+  "note": "Throttle drives SharkMEngineEl.dll (AT5220 + 19x10 + Li-ion 12S 27 Ah); its thrust feeds P1. Cruise 75 km/h at ~56% throttle (~10 N).",
+
+  "inputs": {
+    "aircraft_mass_kg": 14.5,
+    "Initial_Height": 0,
+    "surfaceIsReady": 1,
+    "eng_on_state": 1,
+    "Airport_Temp_C": 15,
+    "Airport_air_pressure_hPa": 1013.25,
+    "Latitude_degrees": 50,
+    "SITL_on": 0,
+    "DYN_STEP_S": 0.0025,
+    "catapult_length_m": 4,
+    "catapult_angle_deg": 12,
+    "catapult_speed_mps": 25,
+    "catapult_height_m": 1.0,
+    "catapult_profile": 0,
+    "parachute_CdS_m2": 0,
+    "parachute_open_s": 2,
+    "engine:неповрежден": 1,
+    "engine:apState": 0,
+    "engine:battery_capacity_Ah": 27,
+    "engine:RPM max": 0
+  },
+  "reset": { "port": "Reposition", "holdSteps": 2 },
+
+  "roll": { "port": "roll_deg" },
+  "pitch": { "port": "pitch_deg" },
+  "yaw": { "port": "course_deg" },
+  "position": { "mode": "absolute", "north": "Xg_m", "east": "Zg_m", "up": "Yg_m" },
+  "airspeed": { "port": "trueAirspeed_kph", "scale": 0.2777777778 },
+  "verticalSpeed": { "port": "Vyg_mps" },
+  "onGround": { "port": "inAir", "invert": true },
+
+  // Bench axes: + = nose up / roll right / nose right. In GorEl ctrl_pitch > 0 is nose down
+  // and ctrl_roll > 0 is roll left (CHANGELOG_ua.md), hence scale -1.
+  "controls": {
+    // Throttle goes to the engine DLL; its thrust is linked into P1 (see "engine").
+    "throttle": { "port": "engine:Power lever1", "min": 0, "max": 1, "initial": 0 },
+    "pitch": { "port": "ctrl_pitch", "scale": -1 },
+    "roll": { "port": "ctrl_roll", "scale": -1 },
+    "yaw": { "port": "ctrl_hdg", "scale": 1 }
+  },
+
+  // Engine DLL, co-simulated every step. Units are those of the SimCore bindings:
+  // eng_P1 is kgf (x 9.80665 -> N); the "speed m_s" input takes km/h despite its name. RPM max is only an emergency ceiling above 9000 in SharkMEngineEl.
+  "engine": {
+    "dll": "SharkMEngineEl.dll",
+    "links": [
+      { "from": "trueAirspeed_kph", "to": "engine:speed m_s" },
+      { "from": "notDamaged", "to": "engine:неповрежден" },
+      { "from": "engine:eng_P1", "to": "P1", "scale": 9.80665 },
+      { "from": "engine:speedForTail m_s", "to": "speedForTail" }
+    ]
+  },
+
+  "actions": [
+    { "id": "arm", "label": "На катапульту", "set": { "catapult_arm": 1, "catapult_fire": 0 } },
+    { "id": "fire", "label": "Пуск", "set": { "catapult_fire": 1 } },
+    { "id": "release", "label": "Зняти з катапульти", "set": { "catapult_arm": 0, "catapult_fire": 0 } },
+    { "id": "charge", "label": "Зарядити батарею", "set": { "engine:battery_recharge": 1 }, "holdSteps": 2 },
+    { "id": "chute", "label": "Парашут (CdS 9.3 м²)", "set": { "parachute_CdS_m2": 9.3, "parachute_deploy": 1 } }
+  ]
+}
