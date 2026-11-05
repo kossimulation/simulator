@@ -20,3 +20,6 @@ slprj/
 *_grt_rtw/
 codegen/
 !matlab/codegen/
+
+# Published bench
+out/

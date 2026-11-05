@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Simulator.Core\Simulator.Core.csproj" />
+    <ProjectReference Include="..\..\src\Simulator.Bench\Simulator.Bench.csproj" />
   </ItemGroup>
 
 </Project>

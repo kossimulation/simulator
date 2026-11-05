@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стенд динаміки</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="title">
+    <strong>Стенд динаміки</strong>
+    <span id="model-name">…</span>
+  </div>
+  <div class="status">
+    <span id="conn" class="pill bad">немає звʼязку</span>
+    <span class="pill" title="Модельний час">t <b id="sim-time">0.0</b> с</span>
+    <span class="pill" title="Швидкість модельного часу відносно реального">RT <b id="rtf">0.00</b>×</span>
+  </div>
+</header>
+
+<main>
+  <section class="view3d">
+    <canvas id="scene"></canvas>
+    <div class="overlay top-left" id="readout"></div>
+    <div class="overlay top-right">
+      <label>Камера
+        <select id="camera">
+          <option value="chase">за бортом</option>
+          <option value="orbit">огляд (мишею)</option>
+          <option value="ground">із землі</option>
+        </select>
+      </label>
+    </div>
+    <div class="overlay bottom-left error" id="error" hidden></div>
+  </section>
+
+  <aside class="instruments">
+    <canvas id="pfd" width="400" height="300"></canvas>
+    <canvas id="map" width="400" height="260"></canvas>
+  </aside>
+
+  <section class="charts">
+    <div class="chart">
+      <div class="chart-head">
+        <select id="ch1"></select><select id="ch1b"></select>
+      </div>
+      <canvas id="chart1" height="150"></canvas>
+    </div>
+    <div class="chart">
+      <div class="chart-head">
+        <select id="ch2"></select><select id="ch2b"></select>
+      </div>
+      <canvas id="chart2" height="150"></canvas>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="buttons">
+      <button id="btn-pause">Пауза</button>
+      <button id="btn-step" title="Один крок (на паузі)">Крок</button>
+      <button id="btn-reset">Скинути</button>
+      <label>Швидкість
+        <select id="speed">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="5">5×</option>
+        </select>
+      </label>
+      <span id="actions"></span>
+    </div>
+
+    <div class="sticks">
+      <div class="axis"><label for="ax-throttle">Газ / крок</label><input type="range" id="ax-throttle" min="0" max="1" step="0.005"><output id="out-throttle"></output></div>
+      <div class="axis"><label for="ax-pitch">Тангаж</label><input type="range" id="ax-pitch" min="-1" max="1" step="0.005"><output id="out-pitch"></output></div>
+      <div class="axis"><label for="ax-roll">Крен</label><input type="range" id="ax-roll" min="-1" max="1" step="0.005"><output id="out-roll"></output></div>
+      <div class="axis"><label for="ax-yaw">Педалі</label><input type="range" id="ax-yaw" min="-1" max="1" step="0.005"><output id="out-yaw"></output></div>
+    </div>
+    <p class="hint">
+      Клавіатура: <kbd>↑</kbd><kbd>↓</kbd> тангаж, <kbd>←</kbd><kbd>→</kbd> крен, <kbd>Q</kbd><kbd>E</kbd> педалі,
+      <kbd>W</kbd><kbd>S</kbd> газ/крок, <kbd>Пробіл</kbd> пауза, <kbd>C</kbd> центрувати ручки.
+      Джойстик/геймпад підхоплюється автоматично. <span id="gamepad"></span>
+    </p>
+  </section>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

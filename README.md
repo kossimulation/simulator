@@ -26,7 +26,11 @@
 - **Готові моделі динаміки** у вигляді DLL з таргета `kos_simulation`
   (AK13Dynamics, DynamicsGorEl): завантажувач `KosModel` (C#) і команда
   `simulator-cli kos`, див. [docs/kos_models.md](docs/kos_models.md).
-- Тести: 13 нативних і 13 на C#. CI на Linux і Windows.
+- **Стенд реального часу з візуалізацією** `simulator-bench`: 3D-вигляд,
+  авіагоризонт, карта, графіки будь-яких каналів, керування з клавіатури чи
+  геймпада. Працює і з вбудованими моделями, і з вашими DLL через JSON-профіль,
+  див. [docs/bench.md](docs/bench.md).
+- Тести: 13 нативних і 17 на C#. CI на Linux і Windows.
 
 ## Вимоги
 
@@ -70,6 +74,16 @@ dotnet run --project managed/src/Simulator.Cli -c Release -- \
     --vehicle fixed-wing --speed 50 --altitude 1000 --duration 30 --pitch-step 0.1 --out fw.csv
 ```
 
+Стенд із візуалізацією (http://localhost:5080):
+
+```bash
+dotnet run --project managed/src/Simulator.Bench -c Release                          # вертоліт
+dotnet run --project managed/src/Simulator.Bench -c Release -- --model fixed-wing    # літак
+```
+
+На Windows для ваших x86 DLL: `./bench_x86.ps1`, потім
+`out\bench-x86\simulator-bench.exe --profile profiles\gorel.json --dll ...\DynamicsGorEl.dll`.
+
 Готова модель-DLL (32-бітна, тому CLI публікується під x86):
 
 ```powershell
@@ -99,6 +113,7 @@ native/
 managed/
   src/Simulator.Core/         P/Invoke + клас Simulation, Kos/KosModel (DLL моделей)
   src/Simulator.Cli/          консольний раннер, CSV
+  src/Simulator.Bench/        стенд: сервер + wwwroot (3D, прилади), profiles/*.json
   tests/Simulator.Core.Tests/ xUnit
 matlab/
   params/                     параметри моделей (синхронно з C++)
@@ -106,6 +121,7 @@ matlab/
   models/                     .slx моделі
 docs/architecture.md
 docs/kos_models.md            ABI і запуск AK13Dynamics / DynamicsGorEl
+docs/bench.md                 стенд: запуск, керування, профілі
 ```
 
 ## Можливі наступні кроки

@@ -1,0 +1,31 @@
+{
+  // AK1-3 helicopter, AK13Dynamics.dll (kos_simulation, 31 inputs / 61 + 42 outputs, slx/ak13_ports.m).
+  "name": "AK1-3",
+  "kind": "helicopter",
+  "dll": "AK13Dynamics.dll",
+  "note": "TO VERIFY: units and signs of RLX/RLY/RLZ/RLN (stick, collective, pedals) and the frame of stepForward/Rightward/Upward_M. Controls start from the balance outputs *_BAL.",
+
+  // Unconnected (0) inputs fall back to the model's defaults: built-in rotor governor,
+  // SimCore protocol (init on the first step / REPOSITION edge), DT_DYN step.
+  "inputs": {
+    "HEIGHT_TRUE_CG_INIT": 0,
+    "ENGINE_EXTERNAL": 0,
+    "USE_JPCMAN": 0
+  },
+  "reset": { "port": "REPOSITION", "holdSteps": 2 },
+
+  "roll": { "port": "roll_deg" },
+  "pitch": { "port": "pitch_deg" },
+  "yaw": { "port": "course_deg" },
+  "position": { "mode": "increments", "north": "stepForward_M", "east": "stepRightward_M", "up": "stepUpward_M" },
+  "airspeed": { "port": "trueAirspeed_kph", "scale": 0.2777777778 },
+  "verticalSpeed": { "port": "verticalSpeed_mps" },
+  "onGround": { "port": "radioAltitude_m", "invert": true },
+
+  "controls": {
+    "throttle": { "port": "RLY", "trimFrom": "RLY_BAL", "scale": 1, "offset": -0.5, "initial": 0.5 },
+    "pitch": { "port": "RLX", "trimFrom": "RLX_BAL", "scale": 1 },
+    "roll": { "port": "RLZ", "trimFrom": "RLZ_BAL", "scale": 1 },
+    "yaw": { "port": "RLN", "trimFrom": "RLN_BAL", "scale": 1 }
+  }
+}

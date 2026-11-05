@@ -1,0 +1,52 @@
+{
+  // GOR-Electric UAV, DynamicsGorEl.dll (kos_simulation, 40 inputs / 55 outputs).
+  // Port meanings: Dynamics/README_ua.md, docs/OUTPUT_CHANNELS.md, CHANGELOG_ua.md.
+  "name": "GOR-Electric",
+  "kind": "fixed-wing",
+  "dll": "DynamicsGorEl.dll",
+  "note": "Thrust P1 is set directly in N (the engine is a separate DLL, GorEngineEl). 14 N holds level flight at ~104 km/h.",
+
+  "inputs": {
+    "aircraft_mass_kg": 11,
+    "Initial_Height": 0,
+    "surfaceIsReady": 1,
+    "eng_on_state": 1,
+    "Airport_Temp_C": 15,
+    "Airport_air_pressure_hPa": 1013.25,
+    "Latitude_degrees": 50,
+    "SITL_on": 0,
+    "DYN_STEP_S": 0.0025,
+    "catapult_length_m": 3.5,
+    "catapult_angle_deg": 12,
+    "catapult_speed_mps": 18,
+    "catapult_height_m": 1.0,
+    "catapult_profile": 0,
+    "parachute_CdS_m2": 0,
+    "parachute_open_s": 2
+  },
+  "reset": { "port": "Reposition", "holdSteps": 2 },
+
+  "roll": { "port": "roll_deg" },
+  "pitch": { "port": "pitch_deg" },
+  "yaw": { "port": "course_deg" },
+  "position": { "mode": "absolute", "north": "Xg_m", "east": "Zg_m", "up": "Yg_m" },
+  "airspeed": { "port": "trueAirspeed_kph", "scale": 0.2777777778 },
+  "verticalSpeed": { "port": "Vyg_mps" },
+  "onGround": { "port": "inAir", "invert": true },
+
+  // Bench axes: + = nose up / roll right / nose right. In GorEl ctrl_pitch > 0 is nose down
+  // and ctrl_roll > 0 is roll left (CHANGELOG_ua.md), hence scale -1.
+  "controls": {
+    "throttle": { "port": "P1", "min": 0, "max": 40, "initial": 0 },
+    "pitch": { "port": "ctrl_pitch", "scale": -1 },
+    "roll": { "port": "ctrl_roll", "scale": -1 },
+    "yaw": { "port": "ctrl_hdg", "scale": 1 }
+  },
+
+  "actions": [
+    { "id": "arm", "label": "На катапульту", "set": { "catapult_arm": 1, "catapult_fire": 0 } },
+    { "id": "fire", "label": "Пуск", "set": { "catapult_fire": 1 } },
+    { "id": "release", "label": "Зняти з катапульти", "set": { "catapult_arm": 0, "catapult_fire": 0 } },
+    { "id": "chute", "label": "Парашут (CdS 7 м²)", "set": { "parachute_CdS_m2": 7, "parachute_deploy": 1 } }
+  ]
+}
